@@ -534,11 +534,26 @@ class LungCTSegmenterLogic(ScriptedLoadableModuleLogic):
         if not self.resampledVolume:
             self.resampledVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "Resampled Volume")
 
+
+        # Get window / level of inputVolume 
+        displayNode = self.inputVolume.GetDisplayNode()
+        displayNode.AutoWindowLevelOff()
+        window = displayNode.GetWindow()
+        level = displayNode.GetLevel()
+
         # Create resampled volume with fixed 2.0mm spacing (for faster, standardized workflow)
+
         self.showStatusMessage('Resampling volume, please wait...')
         parameters = {"outputPixelSpacing": "2.0,2.0,2.0", "InputVolume": self.inputVolume, "interpolationType": "linear", "OutputVolume": self.resampledVolume}
         cliParameterNode = slicer.cli.runSync(slicer.modules.resamplescalarvolume, None, parameters)
         slicer.mrmlScene.RemoveNode(cliParameterNode)
+        
+        # Set window / level of inputVolume in resampledVolume 
+        displayNode = self.resampledVolume.GetDisplayNode()
+        displayNode.AutoWindowLevelOff()
+        displayNode.SetWindow(window)
+        displayNode.SetLevel(level)
+
 
         if not self.outputSegmentation:
             self.outputSegmentation = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLSegmentationNode", "Lung segmentation")
